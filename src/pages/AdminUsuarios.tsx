@@ -58,13 +58,7 @@ const AdminUsuarios: React.FC = () => {
     }
 
     try {
-      const data = await api.post('/usuarios', formData);
-
-      if (!Response.ok) {
-        const errorData = await Response.json();
-        throw new Error(errorData.error || 'Error al crear usuario');
-      }
-
+      await api.post('/usuarios', formData);
       setMessage('Usuario creado exitosamente');
       setFormData({ nombre: '', email: '', password: '', rol: 'tecnico' });
       setShowForm(false);
@@ -79,12 +73,6 @@ const AdminUsuarios: React.FC = () => {
 
     try {
       await api.del(`/usuarios/${id}`);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al eliminar usuario');
-      }
-
       setMessage('Usuario eliminado exitosamente');
       fetchUsuarios();
     } catch (err: any) {

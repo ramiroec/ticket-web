@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
-import './AdminUsuarios.css';
+import './AdminClientes.css';
 
 interface Cliente {
   id: number;
-  empresa: string;
-  contacto: string;
+  nombre: string;
   email: string;
-  sla?: string;
+  telefono?: string;
+  direccion?: string;
 }
 
 const AdminClientes: React.FC = () => {
@@ -20,10 +20,10 @@ const AdminClientes: React.FC = () => {
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    empresa: '',
-    contacto: '',
+    nombre: '',
     email: '',
-    sla: ''
+    telefono: '',
+    direccion: ''
   });
   const [message, setMessage] = useState('');
 
@@ -43,7 +43,7 @@ const AdminClientes: React.FC = () => {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -53,21 +53,15 @@ const AdminClientes: React.FC = () => {
     setMessage('');
     setError('');
 
-    if (!formData.empresa || !formData.email) {
-      setError('Empresa y email son obligatorios');
+    if (!formData.nombre || !formData.email) {
+      setError('Nombre y email son obligatorios');
       return;
     }
 
     try {
-      const data = await api.post('/clientes', formData);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al crear cliente');
-      }
-
+      await api.post('/clientes', formData);
       setMessage('Cliente creado exitosamente');
-      setFormData({ empresa: '', contacto: '', email: '', sla: '' });
+      setFormData({ nombre: '', email: '', telefono: '', direccion: '' });
       setShowForm(false);
       fetchClientes();
     } catch (err: any) {
@@ -76,16 +70,10 @@ const AdminClientes: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Está seguro de que desea eliminar este cliente?')) return;
+    if (!confirm('¿Está seguro de eliminar este cliente?')) return;
 
     try {
       await api.del(`/clientes/${id}`);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al eliminar cliente');
-      }
-
       setMessage('Cliente eliminado exitosamente');
       fetchClientes();
     } catch (err: any) {
@@ -108,7 +96,7 @@ const AdminClientes: React.FC = () => {
         <div className="header-content">
           <div className="header-title">
             <button className="back-button" onClick={handleBack}>←</button>
-            <h1>🏢 Gestión de Clientes</h1>
+            <h1>👥 Gestión de Clientes</h1>
           </div>
           <div className="header-actions">
             <span className="user-info">{auth.user.email}</span>
@@ -122,7 +110,7 @@ const AdminClientes: React.FC = () => {
       <main className="admin-page-main">
         <div className="content-card">
           <div className="card-header">
-            <h2>Clientes de la Plataforma</h2>
+            <h2>Clientes</h2>
             <button
               className="add-button"
               onClick={() => setShowForm(!showForm)}
@@ -137,48 +125,44 @@ const AdminClientes: React.FC = () => {
           {showForm && (
             <form className="form-container" onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Empresa</label>
+                <label>Nombre *</label>
                 <input
                   type="text"
-                  name="empresa"
-                  value={formData.empresa}
+                  name="nombre"
+                  value={formData.nombre}
                   onChange={handleInputChange}
-                  placeholder="Nombre de la empresa"
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label>Contacto</label>
-                <input
-                  type="text"
-                  name="contacto"
-                  value={formData.contacto}
-                  onChange={handleInputChange}
-                  placeholder="Nombre del contacto"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Email</label>
+                <label>Email *</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  placeholder="cliente@example.com"
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label>SLA</label>
+                <label>Teléfono</label>
                 <input
-                  type="text"
-                  name="sla"
-                  value={formData.sla}
+                  type="tel"
+                  name="telefono"
+                  value={formData.telefono}
                   onChange={handleInputChange}
-                  placeholder="Ej: 24 horas, Estándar"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Dirección</label>
+                <textarea
+                  name="direccion"
+                  value={formData.direccion}
+                  onChange={handleInputChange}
+                  rows={3}
                 />
               </div>
 
@@ -198,10 +182,10 @@ const AdminClientes: React.FC = () => {
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>Empresa</th>
-                    <th>Contacto</th>
+                    <th>Nombre</th>
                     <th>Email</th>
-                    <th>SLA</th>
+                    <th>Teléfono</th>
+                    <th>Dirección</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -209,16 +193,10 @@ const AdminClientes: React.FC = () => {
                   {clientes.map(cliente => (
                     <tr key={cliente.id}>
                       <td className="id-cell">#{cliente.id}</td>
-                      <td>{cliente.empresa}</td>
-                      <td>{cliente.contacto}</td>
-                      <td><a href={`mailto:${cliente.email}`} className="info-link">{cliente.email}</a></td>
-                      <td>
-                        {cliente.sla ? (
-                          <span className="role-badge cliente">{cliente.sla}</span>
-                        ) : (
-                          <span style={{ color: '#999' }}>-</span>
-                        )}
-                      </td>
+                      <td>{cliente.nombre}</td>
+                      <td><a href={`mailto:${cliente.email}`}>{cliente.email}</a></td>
+                      <td>{cliente.telefono || '—'}</td>
+                      <td>{cliente.direccion || '—'}</td>
                       <td className="actions-cell">
                         <button
                           className="delete-button"

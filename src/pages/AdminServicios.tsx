@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
-import './AdminUsuarios.css';
+import './AdminServicios.css';
 
 interface Servicio {
   id: number;
@@ -38,16 +38,10 @@ const AdminServicios: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [serviciosRes, clientesRes] = await Promise.all([
+      const [serviciosData, clientesData] = await Promise.all([
         api.get('/servicios'),
         api.get('/clientes')
       ]);
-
-      if (!serviciosRes.ok || !clientesRes.ok)
-        throw new Error('Error al obtener datos');
-
-      const serviciosData = await serviciosRes.json();
-      const clientesData = await clientesRes.json();
 
       setServicios(serviciosData);
       setClientes(clientesData);
@@ -74,15 +68,10 @@ const AdminServicios: React.FC = () => {
     }
 
     try {
-      const data = await api.post('/servicios', {
-          ...formData,
-          cliente_id: parseInt(formData.cliente_id)
-        });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al crear servicio');
-      }
+      await api.post('/servicios', {
+        ...formData,
+        cliente_id: parseInt(formData.cliente_id)
+      });
 
       setMessage('Servicio creado exitosamente');
       setFormData({ cliente_id: '', nombre: '', tipo: '' });
@@ -98,12 +87,6 @@ const AdminServicios: React.FC = () => {
 
     try {
       await api.del(`/servicios/${id}`);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al eliminar servicio');
-      }
-
       setMessage('Servicio eliminado exitosamente');
       fetchData();
     } catch (err: any) {
