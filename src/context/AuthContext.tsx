@@ -6,14 +6,15 @@ interface User {
   email: string;
   nombre?: string;
   rol?: string;
-  tipo?: 'cliente' | 'tecnico';
+  tipo?: 'cliente' | 'tecnico' | 'admin';
 }
 
 interface AuthContextType {
   user: User | null;
-  type: 'cliente' | 'tecnico' | null;
+  type: 'cliente' | 'tecnico' | 'admin' | null;
   loginClient: (email: string, password: string) => Promise<void>;
   loginTech: (email: string, password: string) => Promise<void>;
+  loginAdmin: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -21,7 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [type, setType] = useState<'cliente' | 'tecnico' | null>(null);
+  const [type, setType] = useState<'cliente' | 'tecnico' | 'admin' | null>(null);
 
   const logout = () => {
     localStorage.removeItem('token');
@@ -48,10 +49,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(user);
   };
 
+  const loginAdmin = async (email: string, password: string) => {
+    const data = await api.post('/usuarios/admin/login', { email, password });
+    const { token, user } = data;
+    localStorage.setItem('token', token);
+    localStorage.setItem('type', 'admin');
+    setType('admin');
+    setUser(user);
+  };
+
   // initialize from storage
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const t = localStorage.getItem('type') as 'cliente' | 'tecnico' | null;
+    const t = localStorage.getItem('type') as 'cliente' | 'tecnico' | 'admin' | null;
     if (token && t) {
       if (t === 'cliente') {
         // fetch user info for client
@@ -65,12 +75,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .then((u) => setUser(u))
           .catch(() => logout());
         setType('tecnico');
+      } else if (t === 'admin') {
+        // For admin, we can store basic info in localStorage for now
+        setType('admin');
       }
     }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, type, loginClient, loginTech, logout }}>
+    <AuthContext.Provider value={{ user, type, loginClient, loginTech, loginAdmin, logout }}>
       {children}
     </AuthContext.Provider>
   );
