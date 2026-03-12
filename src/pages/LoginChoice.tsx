@@ -21,6 +21,12 @@ const LoginChoice: React.FC = () => (
         <h2>Técnico</h2>
         <p>Panel de técnicos para gestionar y resolver tickets de soporte</p>
       </Link>
+      
+      <Link to="/login/admin" className="choice-card admin-card">
+        <div className="card-icon">👑</div>
+        <h2>Administrador</h2>
+        <p>Acceso de administrador para gestionar usuarios, servicios y auditorías</p>
+      </Link>
     </div>
   </div>
 );
